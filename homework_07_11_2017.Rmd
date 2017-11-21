@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "Homwork_07_11_17"
 author: "Lucia Tischer"
@@ -218,3 +219,225 @@ sort(test)
                  second number is 6th highest, ...)
 - sort(): sorts the values in ascending order
 
+=======
+---
+title: "Homwork_07_11_17"
+author: "Lucia Tischer"
+date: "9 November 2017"
+output: beamer_presentation
+fontsize: 8pt
+fig_width: 12
+fig_height: 10
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, eval = TRUE)
+```
+
+## 1) Creating the data
+
+First, I created a data set, consisting of body size, weight and sex of 150 persons:
+
+- 50 men: average height of 180 cm, average weigth of 85 kg (data_men).
+- 50 women: average height of 170 cm, average weight of 68 kg (data_women).
+- 50 children: average heigth of 140 cm, average weigth of 50 kg (data_children).
+
+```{r, echo = TRUE}
+data_men <-  data.frame(sex = "man", 
+                        heigth = round(sort(rnorm(50, mean = 180, 
+                                                  sd = 10))), 
+                        weigth = round(sort(rnorm(50, mean = 85, 
+                                                  sd = 10))))
+```
+```{r, echo = FALSE, eval = TRUE}
+data_women <-data.frame(sex = "woman", 
+                        heigth = round(sort(rnorm(50, mean = 170, sd = 10))), 
+                        weigth = round(sort(rnorm(50, mean = 68, sd = 10))))
+data_children <-data.frame(sex = "child", 
+                          heigth = round(sort(rnorm(50, mean = 140, sd = 10))), 
+                          weigth = round(sort(rnorm(50, mean = 50, sd = 10))))
+```
+
+
+I connected the data to one data-frame:
+```{r, echo = TRUE}
+names(data_men) <- colnames(data_men)
+names(data_women) <- colnames(data_men)
+names(data_children) <- colnames(data_men)
+data_complet = rbind(data_men, data_women, data_children)
+```
+
+***
+To check the data each 30th entry, I define a squence from 30 to 150 including 1 and query the data at these points:
+```{r, echo = TRUE}
+position = c(1, seq(30, length(data_complet$heigth), 30))
+data_complet[(position), ]
+```
+
+
+## 2) Saving the data as csv-file and reloading the data
+I saved the data.frame as csv-file...
+```{r, echo =TRUE, eval = FALSE}
+write.table(data_complet, file ="~/data_homework_07_11.csv", 
+            sep = ";", 
+            row.names = FALSE)
+```
+
+```{r, echo = FALSE, eval = TRUE, message = FALSE}
+write.table(data_complet, file ="C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/data_homework_07_11.csv", sep = ";", row.names = FALSE)
+```
+
+... and reloaded it.
+```{r, echo =TRUE, eval = FALSE}
+table = read.csv("~/data_homework_07_11.csv", 
+                 sep = ";", 
+                 header = TRUE)
+```
+
+```{r, echo = FALSE, eval = TRUE, message = FALSE}
+table = read.csv("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/data_homework_07_11.csv", 
+                 sep = ";", 
+                 header = TRUE)
+```
+
+## 3) Queriing data points and information
+Getting some information about the data, for example:
+```{r, echo = TRUE, results = FALSE}
+summary(table) # overview over all values.
+summary(table[table$sex == "man", ]) # ... over values of men.
+str(table) # summary of included variables and their classes.
+mode(table) # storage mode of "table" --> "list"
+head(table) # first 6 lines of "table".
+# query single values, like: 
+# how many weight-data points of children do exist.
+length(table$weigth[table$sex == "child"])
+# maximum heigth in children.
+max(table$heigth[table$sex == "child"]) 
+# how many people between 160 and 180 cm.
+length(table$heigth[table$heigth >= 160 & table$heigth <= 180]) 
+```
+
+## 4) Plotting the data
+Compare the data points visually by plotting:  
+
+- Scatterplot:
+```{r}
+par(mfrow =c(1, 1))
+plot(table$heigth[table$sex == "man"], table$weigth[table$sex == "man"],
+     col = "blue", 
+     xlab = "body size [cm]", 
+     ylab = "body weigth [kg]", 
+     cex.lab = 1.3, 
+     las = 1, 
+     pch = 20, 
+     xlim = c(95, 210), 
+     ylim = c(25, 110))
+points(table$heigth[table$sex == "woman"], table$weigth[table$sex == "woman"],
+     col = "darkred", 
+     pch = 20)
+points(table$heigth[table$sex == "child"], table$weigth[table$sex == "child"],
+     col = "orange", 
+     pch = 20)
+legend(x = 95, y = 110, 
+       legend = c("men", "women", "children"), 
+       col = c("blue", "darkred", "orange"), 
+       fill = c("blue", "darkred", "orange"))
+```
+
+***
+
+-  Barplot
+```{r}
+
+boxplot(table$weigth ~ table$sex, 
+        names = c("children", "men", "women"), 
+        xlab = "persons", 
+        ylab = "body weigth [kg]", 
+        cex.lab = 1.3, 
+        las = 1)
+```
+
+## 5) "Cutting" parts of the data to check
+How many women are in each body-heigth group?
+How is the distribution pattern?
+
+- Check minimum and maximum sizes.
+```{r}
+max_size_woman <- max(table$heigth[table$sex =="woman"])
+min_size_woman <- min(table$heigth[table$sex =="woman"])
+```
+
+- Group the data:
+```{r,  echo = TRUE, eval = TRUE, message = FALSE}
+women_sizegroups <- cut(table$heigth[table$sex == "woman"], 
+                        breaks = c(150, 160, 170, 180, 190, 200), 
+                        include.lowest = FALSE,
+                        rigth = TRUE, 
+                        labels = c("150 to 160", "161 to 170", 
+                                   "171 to 180", "181 to 190", 
+                                   "above 190"))
+table(women_sizegroups)
+```
+
+***
+
+- Plot the number of women per group
+```{r, echo = FALSE, eval = TRUE, message = FALSE}
+plot(women_sizegroups, 
+     ylim = c(0, 25), 
+     xlab = "body sizes women [cm]", 
+     ylab = "number of women per group", 
+     cex.lab = 1.3, 
+     las = 1)
+```
+
+***
+
+- show the distribution amongst the size groups,  
+  "50 % of the women are smaller than ... cm ..."
+```{r, echo = FALSE, eval = TRUE}
+women_size_dist <- (quantile((table$heigth[table$sex == "woman"]), 
+                                      c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)))
+test <- (quantile((table$heigth[table$sex == "woman"]), 
+                                      c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)))
+plot(women_size_dist, 
+     cex.lab = 1.3, 
+     xaxt = "n", 
+     xlab = "`percent of smallest women´", 
+     ylab = "body size [cm]", 
+     las = 1)
+axis(side = 1, at=c(1,2,3,4,5,6,7,8, 9), 
+     labels=c(10, 20, 30, 40, 50, 60, 70, 80, 90),
+     las=1)
+segments(x0 = 0, y0 = women_size_dist[1], x1 = 1, y1 = women_size_dist[1], col="red")
+segments(x0 = 0, y0 = women_size_dist[2], x1 = 2, y1 = women_size_dist[2], col="red")
+segments(x0 = 0, y0 = women_size_dist[3], x1 = 3, y1 = women_size_dist[3], col="red")
+segments(x0 = 0, y0 = women_size_dist[4], x1 = 4, y1 = women_size_dist[4], col="red")
+segments(x0 = 0, y0 = women_size_dist[5], x1 = 5, y1 = women_size_dist[5], col="red")
+segments(x0 = 0, y0 = women_size_dist[6], x1 = 6, y1 = women_size_dist[6], col="red")
+segments(x0 = 0, y0 = women_size_dist[7], x1 = 7, y1 = women_size_dist[7], col="red")
+segments(x0 = 0, y0 = women_size_dist[8], x1 = 8, y1 = women_size_dist[8], col="red")
+segments(x0 = 0, y0 = women_size_dist[9], x1 = 9, y1 = women_size_dist[9], col="red")
+```
+
+## 6) The functions order(), rank() and sort()
+
+First, I defined an (unordered) example vector of values and tested the functions.
+```{r, echo = TRUE,  results = TRUE}
+test <- c(2,5,4,3,1,0)
+order(test) 
+rank(test)  
+sort(test)   
+```
+
+- order(): shows the order, in which values needed to be  
+           to be ascending
+- rank(): shows "ranks" of the values  
+          (here: first number is 3th highest,  
+                 second number is 6th highest, ...)
+- sort(): sorts the values in ascending order
+
+>>>>>>> b6ad0093d2154cbfb1224a85e5de58297a114737
