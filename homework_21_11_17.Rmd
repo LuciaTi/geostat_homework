@@ -1,0 +1,97 @@
+---
+title: "Bivand et al. 2013 - Chapter 2"
+author: "Lucia Tischer"
+date: "28 November 2017"
+output: beamer_presentation
+fontsize: 8pt
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Classes and Methods in R
+
+- R as simple calculator: therefore used mathmatical functions/operators are already defined!
+- Operators can be used to define sequences.
+- Results can be printed.
+- Variable contain objects of particular classes.  
+  --> the class determines the method to handle the object
+- These objects are stored in particular modes.
+
+***
+Example 1:
+
+```{r}
+# define a variable using predefined operators
+# (here: integer sequence)
+x <- pi * (1:10)^2  
+```
+
+```{r}
+x         # print the variable (by default)
+print(x)  # print the variable (explicit method)
+
+class(x)  # the object is of class numeric
+typeof(x) # storing mode is double
+```
+
+
+***
+
+If no method is defined for a class,  
+it´s passed to a default method = generic function.
+
+Example 2:
+```{r}
+class(cars) # the object is of class data.frame
+typeof(cars) # it contains values in a list (vector of arbitrary objects)
+```
+
+***
+
+The methods names() and summary() can be applied:
+```{r}
+names(cars) # cars contains values from two variables
+summary(cars) # get information about the data structure
+str(cars) # get summed up information, including size and class of the object
+```
+
+
+***
+
+Dataframes view data in rectangles:
+- rows of observations
+- columns of variables
+
+Rownames
+
+## Spatial Objects
+
+```{r cars, echo = TRUE}
+summary(cars)
+```
+
+## Spatial points
+
+```{r pressure}
+plot(pressure)
+```
+
+## Spatial Lines
+
+
+## Spatial Polygons
+
+
+## Spatial Grid and Spatial Pixel Objects
+
+
+## Raster Objects and the raster package
