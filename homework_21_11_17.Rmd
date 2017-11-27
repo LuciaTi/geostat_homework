@@ -9,25 +9,33 @@ fontsize: 8pt
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+setwd("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework")
 ```
 
 ## Introduction
 
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
 
 ## Classes and Methods in R
 
-- R as simple calculator: therefore used mathmatical functions/operators are already defined!
-- Operators can be used to define sequences.
-- Results can be printed.
+- R as simple calculator: therefore used mathmatical functions/operators are already defined!  
+
+
+- Operators can be used to define sequences.  
+
+
+- Results can be printed.  
+
+
 - Variable contain objects of particular classes.  
-  --> the class determines the method to handle the object
+  --> the class determines the method to handle the object  
+  
+  
 - These objects are stored in particular modes.
 
 ***
-Example 1:
+
+Example:
 
 ```{r}
 # define a variable using predefined operators
@@ -46,10 +54,12 @@ typeof(x) # storing mode is double
 
 ***
 
-If no method is defined for a class,  
-itÂ´s passed to a default method = generic function.
+If no method is defined for a class,  it´s passed to a default method.  
 
-Example 2:
+= generic function. 
+
+
+Example:
 ```{r}
 class(cars) # the object is of class data.frame
 typeof(cars) # it contains values in a list (vector of arbitrary objects)
@@ -57,7 +67,7 @@ typeof(cars) # it contains values in a list (vector of arbitrary objects)
 
 ***
 
-The methods names() and summary() can be applied:
+The methods names() and summary() can be applied on *cars*:
 ```{r}
 names(cars) # cars contains values from two variables
 summary(cars) # get information about the data structure
@@ -66,32 +76,542 @@ str(cars) # get summed up information, including size and class of the object
 
 
 ***
+--> *cars* is of class *data.frame*  
 
-Dataframes view data in rectangles:
+Dataframes view data in rectangles:  
+
 - rows of observations
 - columns of variables
 
-Rownames
+Adressing rownames:
+```{r}
+row.names(cars) # query the rownames
+test_frame <- cbind(c(1:10), c(rnorm(10)))
+row.names(test_frame)
+row.names(test_frame) <- c(1:10) # assign rownames
+row.names(test_frame)
+```
+
+***
+
+*formula* = abstraction to facilitate statistical modelling  
+
+- 2-sided, response- and determining variable
+- used for model fitting functions
+- accompanied by *data* argument: where to find information
+```{r}
+class(cars$dist ~ cars$speed)
+lm(dist ~ speed, data = cars)
+```
+
+***
+  
+A *formula* can be used for factors as well.
+```{r}
+# create a factor for speed by cutting into quartiles
+cars$qspeed <- cut(cars$speed, 
+                   breaks = quantile(cars$speed),
+                   include.lowest = TRUE)
+is.factor(cars$qspeed)
+```
+
+--> the plot method will choose the right method depending on the given class
+
+***
+```{r, echo = FALSE, eval = TRUE, message = FALSE}
+par(mfrow = c(1,2))
+plot(dist ~ speed, data = cars, 
+     main = "numeric: scatterplot", 
+     cex.main = 1.5)
+plot(dist ~ qspeed, data = cars, 
+     main = "factor: boxplot", 
+     cex.main = 1.5)
+```
+
+--> the plot method will choose the right method depending on the given class
+
+***
+How does the *lm* funcion react to the factor?
+```{r}
+lm(cars$dist ~ cars$qspeed)
+```
+
+--> a dummy variable form is created automatically.
+
 
 ## Spatial Objects
-
-```{r cars, echo = TRUE}
-summary(cars)
+```{r warning = FALSE, echo = FALSE}
+library(sp)
 ```
+
+```{r}
+getClass("Spatial")
+```
+
+***
+
+--> Spatial Objects contains two slots:  
+
+- a matrix with 2 rows and columns for the coordinates  
+- a CRS class object, defining the coordinate reference system  
+
+Spatial subclasses are also defined by the class *Spatial*.
+  
+***
+
+```{r}
+getClass("CRS")
+```
+
+--> only slot value: character string
+simpliest string for geographical coordinates: "+proj=longlat"
+
+***
+--> a simple *Spatial* object can be built from a bounding box matrix and a missing coordinate reference system:
+```{r}
+m <- matrix(c(0, 0, 1, 1), 
+            ncol = 2, 
+            dimnames = list(NULL,c("min", "max"))) # matrix is defined
+crs <- CRS(projargs = as.character(NA)) # CRS is defined as `missing´
+crs
+# Spatial object is created from the matrix and the CRS
+S <- Spatial(bbox = m, proj4string = crs) 
+S
+```
+
 
 ## Spatial points
 
-```{r pressure}
-plot(pressure)
+- a 2D pint can be discribed by a pair of numbers (x, y)
+- geographic coordinates define a unique point, if the ellipsoid model and the prime meridian are also known.  
+
+Check the Class **SpatialPoints**
+```{r}
+getClass("SpatialPoints")
+```
+--> A third slot *coords* is added  
+--> point coordinates can be added.
+
+***
+```{r, eval = TRUE, echo = FALSE, message = FALSE}
+CRAN_df <- read.table("CRAN051001a.txt", header = TRUE)
+CRAN_mat <- cbind(CRAN_df$long, CRAN_df$lat)
+row.names(CRAN_mat) <- 1:nrow(CRAN_mat)
+llCRS <- CRS("+proj=longlat +ellps=WGS84")
+CRAN_sp <- SpatialPoints(CRAN_mat, proj4string = llCRS)
 ```
 
+*SpatialPoints* objects have a summary method:
+```{r}
+summary(CRAN_sp)
+```
+--> Object is not projected
+--> there are 54 rows of coordinates
+
+***
+### Methods for SpatialPoints
+
+Access values of the slots: **bbox** method
+```{r}
+bbox(CRAN_sp) 
+```
+--> bounding box of the object is returned.
+--> first row: west-east, second row: south-north direction.
+
+Reporting to current projection string: **proj4string** method
+```{r}
+proj4string(CRAN_sp)
+proj4string(CRAN_sp) <- CRS(as.character(NA)) # set to NA
+proj4string(CRAN_sp) <- llCRS # re-set to old value
+```
+
+***
+
+Extracting the coordinates: **coordinates** method
+```{r, eval = TRUE, echo = TRUE, results=FALSE}
+brazil <- which(CRAN_df$loc == "Brazil") # choose the locations in Brazil
+brazil
+```
+
+```{r}
+# choose coordinates coresponding to locations
+coordinates(CRAN_sp)[brazil, ] 
+```
+
+***
+
+Access the object by indexing:
+```{r}
+summary(CRAN_sp[brazil, ])
+```
+
+--> object ist of class *SpatialPoints*
+--> new bounding box
+--> projectin is retained
+
+***
+### Data Frames for Spatial Point Data
+--> data from different sources can be mereged, if matrix rownames (coordinates) and data frame rownames (measurements) match  
+
+--> data frame get re-ordered to suit coordinate points  
+
+Create a **SpatialPointsDataFrame** from a **SpatialPoints** object and a **data frame**
+```{r}
+CRAN_spdf1 <- SpatialPointsDataFrame(CRAN_mat, 
+                                     CRAN_df, 
+                                     proj4string = llCRS, 
+                                     match.ID = TRUE)
+CRAN_spdf1[54, ]
+```
+--> the two objects got merged by their rownames.
+
+***
+--> same would result, if the data frame got mixed randomly.
+```{r}
+s <- sample(nrow(CRAN_df))
+CRAN_spdf2 <- SpatialPointsDataFrame(CRAN_mat, 
+                                     CRAN_df[s,], 
+                                     proj4string = llCRS, 
+                                     match.ID = TRUE)
+all.equal(CRAN_spdf2, CRAN_spdf1)
+```
+--> ID values need to match, otherwise: ERROR.
+
+***
+
+Examine the contents of a **SpatialPointsDataFrame**
+```{r}
+getClass("SpatialPointsDataFrame")
+```
+--> slot *data* keeps the information (in a **data.frame** object).  
+--> also contains information contained in *Spatial* class object like bbox or proj4string.  
+--> Behavior of **SpatialDataFrames** +/- like data frames: methods like *names()* or *str()* are included.
+
+
+***
+Other possibility to construct a **SpatialPointsDataFrame**:
+```{r}
+# a SpatialPoints object as first argument in the function
+CRAN_spdf4 <- SpatialPointsDataFrame(CRAN_sp,
+                                     CRAN_df)
+
+
+all.equal(CRAN_spdf4, CRAN_spdf2) # check if the result is equal.
+```
+***
+
+Assign coordinates to a data frame:  
+
+--> original data frame is modified!  
+  
+  
+```{r}
+CRAN_df0 <- CRAN_df # dublicate the data frame
+
+# assign coordinates by matrix of coordinates
+coordinates(CRAN_df0) <- CRAN_mat
+
+proj4string(CRAN_df0) <- llCRS # define projection of coordinates
+
+all.equal(CRAN_df0, CRAN_spdf2) # check if objects are equal
+```
+
+***
+**SpatialPoints**: can also represent lines, if information is associated with point, rather than the line.  
+--> sequence numbers for the points need to be entered  
+--> tracing in order is possible
+
+```{r}
+# read in the data
+turtle_df <- read.csv("seamap105_mod.csv", sep = ";")
+
+# observtions get timstamped
+timestamp <- as.POSIXlt(strptime(as.character(turtle_df$obs_date),
+                                 "%m/%d/%Y%H:%M:%S"), "GMT")
+# new data frame with data and timestamp
+turtle_df1 <- data.frame(turtle_df, timestamp = timestamp)
+
+# longitude values are corrected to positiv ones (?!)
+turtle_df1$lon <- ifelse(turtle_df1$lon < 0, 
+                         turtle_df1$lon ++ 360, 
+                         turtle_df1$lon)
+
+# new data frame is re-ordered by the timestamp
+turtle_sp <- turtle_df1[order(turtle_df1$timestamp), ]
+
+# coordinates and crs are defined
+coordinates(turtle_sp) <- c("lon", "lat")
+proj4string(turtle_sp) <- CRS("+proj=longlat +ellps=WGS84")
+```
+
+
 ## Spatial Lines
+--> lines as sequences/set of points, skipping the NA-values.
+
+Compare **Line**, **Lines**, and **SpatialLines** objects:
+```{r}
+getClass("Line")
+```
+--> **Line** object is a matrix of 2D coordinates  
+
+--> doesn´t inherit from *Spatial* class  
+
+***
+
+```{r}
+getClass("Lines")
+```
+--> **Lines** object consists of list of **Line** objects  
+
+--> doesn´t inherit from *Spatial* class  
+
+***
+
+```{r}
+getClass("SpatialLines")
+```
+--> inherits from **Spatial** class  
+(bbox- and proj4string slots contain spatial information for lines slot)
+
+***
+
+Example for a **SpatialLines** object:
+```{r, message = FALSE}
+library(maps) # load the package (containing the data)
+japan <- map("world", "japan", plot = FALSE) # define the example data
+p4s <- CRS("+proj=longlat +ellps=WGS84") # define the CRS
+library(maptools) # load the package (containing the function)
+SLjapan <- map2SpatialLines(japan, proj4string = p4s) # convert the data
+str(SLjapan, max.level = 2) # examine SpatialLines object
+```
+
+***
+
+**SpatialLines** objects are similar to **SpatilaPolygons** objects.  
+
+--> contents of objects can be explored with *lapply()* or *sapply()*  
+
+--> What´s the length of the **Lines** slot of each object in the **Lines** slot of SLJapan?
+```{r}
+Lines_len <- sapply(slot(SLjapan, "lines"), 
+                    function(x) length(slot(x,"Lines")))
+table(Lines_len)
+```
+--> None of the 34 **Lines** slots contains more than 1 **Line** object.
+
+***
+Other possiblity to create **SpatialLinesDataFrame**:  
+*ContourLines2SLDF()* function  
+
+--> *slot()* can be used to look inside the slots of objects.
+```{r}
+volcano_sl <- ContourLines2SLDF(contourLines(volcano))
+t(slot(volcano_sl, "data"))
+```
+
+***
+Reading in data and format it to a **SpatialLines** object directly:
+```{r}
+llCRS <- CRS("+proj=longlat +ellps=WGS84")
+auck_shore <- MapGen2SL("auckland_mapgen.dat.txt", llCRS)
+summary(auck_shore)
+```
 
 
 ## Spatial Polygons
 
+Polygon = closed line.  
+--> first point of sequence = last point of the sequence.  
+--> Multiple polygons are separated by NA values.  
 
-## Spatial Grid and Spatial Pixel Objects
+Which of the imported lines represent shorelines of islands?
+```{r, eval = TRUE, echo = TRUE, message = FALSE}
+lns <- slot(auck_shore, "lines")
+table(sapply(lns, function(x) length(slot(x, "Lines"))))
+```
+--> the slots each contain only one object.  
 
 
-## Raster Objects and the raster package
+***
+  
+How many of the Lines are Polygons?
+```{r}
+islands_auck <- sapply(lns, 
+                       function(x) {crds <- slot(slot(x, "Lines")[[1]], "coords")
+# are first and last coordinate identical?                       
+identical(crds[1, ], crds[nrow(crds), ])})
+table(islands_auck)
+```
+--> 64 objects have identical first/last coordinates  
+--> are polygons!
+
+***
+  
+Compare classes **Polygon** and **Line**:
+```{r}
+getClass("Polygon")
+```
+--> **Polgon** extends **Line**  
+
+- labelpoint: centroid of the polygon  
+- area of the polygon  
+- wether polygon is declared as a hole or not  
+- ring direction of the polygon  
+  
+  --> polygons are **LinearRing** objects (closed LineString)
+
+***
+
+How about the **Polygons** class?
+```{r}
+getClass("Polygons")
+```
+--> **Polygons** objects are *MultiPolygon* objects  
+--> contain a list of **Polygon** objects  
+--> additional plot order slot
+
+***
+
+Finally: **SpatialPolygons** objects:
+```{r}
+getClass("SpatialPolygons")
+```
+--> **SpatialPolygons** are sets of **Polygons** objects with additional slots of **Spatial** objects  
+(bounding box, projection information of the set)  
+--> also: additional plot order slot  
+(plot order decreases from polygon with biggest to smallest area)
+
+Creation of **SpatialPolygons** objects: from shoreline data with closed lines
+
+***
+
+### 2.6.1 SpatialPolygonsDataFrame Objects
+
+--> spatial representation of polygons **+** data  
+
+--> **SpatialPolygons** objects have tags 
+
+--> these tags are matched with row names of the data frame  
+(one-to-one matching)
+
+--> correct data rows are associated with the correct spatial objects  
+
+If tags and row names don´t correspond: **ERROR**  
+--> **SpatialPolygonsDataFrame** objects can´t be created.
+
+***  
+
+Example: associate test results with country boundaries:  
+
+```{r}
+library(maps)
+
+# define boundaries
+state.map <- map("state", plot = FALSE, fill = TRUE)
+IDs <- sapply(strsplit(state.map$names, ":"), 
+              function(x) x[1])
+
+library(maptools)
+
+# convert boundaries to a SpatialPolygons object
+state.sp <- map2SpatialPolygons(state.map,
+                                IDs = IDs,
+                                proj4string = CRS("+proj=longlat +ellps=WGS84"))
+```
+***
+
+The data frame rows are suited to the **SpatialPolygons** by identifying tag matching:
+```{r, result = FALSE}
+# read in the test data
+sat <- read.table("state.sat.data_mod.txt", 
+                  row.names = 5,
+                  header = TRUE)
+# match tags and row names
+id <- match(row.names(sat), row.names(state.sp))
+
+sat1 <- sat[!is.na(id), ]
+state.spdf <- SpatialPolygonsDataFrame(state.sp, sat1)
+```
+
+***
+Have a look on the **SpatialPolygonsDataFrame**:
+```{r}
+str(state.spdf, max.level = 2)
+```
+***
+
+### 2.6.2 Holes and Ring Direction (?)
+
+- Polygons can be marked as holes (f.e. TRUE/FALSE: hole slote)
+
+- hole slot can be set directly while reading in the data:  
+--> four levels: 1-land, 2-lake, 3-island in lake, 4-lake on island in lake
+
+
+## 2.7 Spatial Grid and Spatial Pixel Objects (?)
+```{r}
+getClass("GridTopology")
+```
+--> Grid = regular objects  
+--> much less information is required to define their structure  
+--> extent is fiven by cell resolution and numbers of rows and columns
+
+
+
+- - - example data not found ...
+
+## 2.8 Raster Objects and the raster package
+```{r, message =FALSE}
+library(raster)
+r <- raster("70042108.tif") # define a raster object
+class(r) # query some information about the object
+inMemory(r)
+object.size(r)
+cellStats(r, max)
+cellStats(r, min)
+```
+*** 
+
+How to remove values of less then or equal to zero:
+```{r, message=FALSE, echo = TRUE, eval =TRUE}
+out <- raster(r) # new file gets defined with same structure as r
+bs <- blockSize(out) # define number of entire row/chunk sizes
+
+# open new file and start writing the values
+out <- writeStart(out, filename = tempfile(), overwrite = TRUE)
+for (i in 1:bs$n) { 
+  v <- getValues(r, row = bs$row[i], nrows = bs$nrows[i]) 
+  v[v <= 0] <- NA
+  writeValues(out, v, bs$row[i])
+}
+out <- writeStop(out) # close file/stop writing
+```
+***
+Check the new minimum and maximum values:
+```{r}
+cellStats(out, min)
+cellStats(out, max)
+```
+
+***
+Possibility for plotting raster data:
+```{r}
+plot(out, col = terrain.colors(100))
+```
+***
+
+Coercion between classes of the **sp** and **raster** package is possible.  
+--> Coercion from raster layer to SpatialGridDataFrame:
+```{r}
+r1 <- as(out, "SpatialGridDataFrame")
+summary(r1)
+```
+***
+
+--> Coercion from SpatialGridDataFrame to raster layer:
+```{r}
+r1 <- as(out, "SpatialGridDataFrame")
+summary(r1)
+```
+
+
