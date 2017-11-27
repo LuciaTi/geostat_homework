@@ -54,7 +54,7 @@ typeof(x) # storing mode is double
 
 ***
 
-If no method is defined for a class,  it´s passed to a default method.  
+If no method is defined for a class,  itÂ´s passed to a default method.  
 
 = generic function. 
 
@@ -172,7 +172,7 @@ simpliest string for geographical coordinates: "+proj=longlat"
 m <- matrix(c(0, 0, 1, 1), 
             ncol = 2, 
             dimnames = list(NULL,c("min", "max"))) # matrix is defined
-crs <- CRS(projargs = as.character(NA)) # CRS is defined as `missing´
+crs <- CRS(projargs = as.character(NA)) # CRS is defined as `missing?
 crs
 # Spatial object is created from the matrix and the CRS
 S <- Spatial(bbox = m, proj4string = crs) 
@@ -354,7 +354,7 @@ getClass("Line")
 ```
 --> **Line** object is a matrix of 2D coordinates  
 
---> doesn´t inherit from *Spatial* class  
+--> doesnÂ´t inherit from *Spatial* class  
 
 ***
 
@@ -363,7 +363,7 @@ getClass("Lines")
 ```
 --> **Lines** object consists of list of **Line** objects  
 
---> doesn´t inherit from *Spatial* class  
+--> doesnÂ´t inherit from *Spatial* class  
 
 ***
 
@@ -391,7 +391,7 @@ str(SLjapan, max.level = 2) # examine SpatialLines object
 
 --> contents of objects can be explored with *lapply()* or *sapply()*  
 
---> What´s the length of the **Lines** slot of each object in the **Lines** slot of SLJapan?
+--> What?s the length of the **Lines** slot of each object in the **Lines** slot of SLJapan?
 ```{r}
 Lines_len <- sapply(slot(SLjapan, "lines"), 
                     function(x) length(slot(x,"Lines")))
@@ -413,7 +413,7 @@ t(slot(volcano_sl, "data"))
 Reading in data and format it to a **SpatialLines** object directly:
 ```{r}
 llCRS <- CRS("+proj=longlat +ellps=WGS84")
-auck_shore <- MapGen2SL("auckland_mapgen.dat.txt", llCRS)
+auck_shore <- MapGen2SL("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/auckland_mapgen.dat.txt", llCRS)
 summary(auck_shore)
 ```
 
@@ -496,8 +496,8 @@ Creation of **SpatialPolygons** objects: from shoreline data with closed lines
 
 --> correct data rows are associated with the correct spatial objects  
 
-If tags and row names don´t correspond: **ERROR**  
---> **SpatialPolygonsDataFrame** objects can´t be created.
+If tags and row names don?t correspond: **ERROR**  
+--> **SpatialPolygonsDataFrame** objects can?t be created.
 
 ***  
 
@@ -540,13 +540,47 @@ str(state.spdf, max.level = 2)
 ```
 ***
 
-### 2.6.2 Holes and Ring Direction (?)
+### 2.6.2 Holes and Ring Direction
 
 - Polygons can be marked as holes (f.e. TRUE/FALSE: hole slote)
 
 - hole slot can be set directly while reading in the data:  
 --> four levels: 1-land, 2-lake, 3-island in lake, 4-lake on island in lake
 
+- additional: ring direction --> anti-clockwise = hole, clockwise= non-hole  
+--> internal boundaries of polygons can be marked  
+(as lakes or holes)
+
+Example: data from Lake Huron (Canada) with Manitoulin Island and lakes on the Island
+***
+```{r, warning=FALSE, echo =FALSE, eval = TRUE}
+# load workspace "high" from harddisk and save high$sp as manitoulin_sp
+load("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/high.RData")
+manitoulin_sp <- high$SP
+```
+
+```{r, warning=FALSE, results=TRUE}
+# how many objects does the slot "polygons" contain?
+length(slot(manitoulin_sp, "polygons"))
+
+# which of the polygons is a hole?
+sapply(slot(slot(manitoulin_sp, "polygons")[[1]], "Polygons"),
+       function(x) slot(x, "hole"))
+
+# whatÂ´s the ring direction of the polygons
+sapply(slot(slot(manitoulin_sp, "polygons")[[1]], "Polygons"),
+       function(x) slot(x, "ringDir"))
+```
+***
+Assign the *"hole"* status by adding a comment to each **Polygons** member:
+```{r}
+library(rgeos)
+manitoulin_sp <- createSPComment(manitoulin_sp)
+sapply(slot(manitoulin_sp, "polygons"), comment)
+```
+--> three times coded 3: three lakes on the Island
+--> one time coded 1: mainland shore
+--> most coded cero: Lake Huron (normally 2, but not fully contained by the mainland shore)
 
 ## 2.7 Spatial Grid and Spatial Pixel Objects (?)
 ```{r}
@@ -554,11 +588,111 @@ getClass("GridTopology")
 ```
 --> Grid = regular objects  
 --> much less information is required to define their structure  
---> extent is fiven by cell resolution and numbers of rows and columns
+--> extent is given by cell resolution and numbers of rows and columns  
+
+--> typical for remote sensing and raster
+
+Have a look on the class **GridTopology**:
+```{r}
+getClass("GridTopology")
+```
+***
+
+Create a **GridTopology** object from Manitoulin Island data set:
+```{r}
+# defin the coordinates
+bb <- bbox(manitoulin_sp)
+
+# define cellsize [degree] in each direction
+cs <- c(0.01, 0.01)
+
+# define the cell centre (south-west)
+cc <- bb[, 1] + (cs/2)
+
+# define dimension of grid [cell numbers per direction]
+cd <- ceiling(diff(t(bb))/cs)
+
+# create the grid
+manitoulin_grd <- GridTopology(cellcentre.offset = cc,
+                               cellsize = cs, cells.dim = cd)
+
+manitoulin_grd # have a look on the grid
+```
+--> grid can be discribed with this object
+--> object can be used to construct a **SpatialGrid** object
+
+***
+
+Check the class **SpatialGrid**
+```{r}
+getClass("SpatialGrid")
+```
+--> contains **GridTopology** and **Spatial** objects.
+
+***
+
+Create a **SpatialGrid** object:
+```{r}
+# define the coordinate reference system
+p4s <- CRS(proj4string(manitoulin_sp))
+
+# create the SpatialGrid
+manitoulin_SG <- SpatialGrid(manitoulin_grd, proj4string = p4s)
+summary(manitoulin_SG)
+```
+--> bounding box is created autaumatically
 
 
+***
+Example with imported data: **SpatialGridDataFrame  
+```{r, eval = TRUE, echo = FALSE}
+library(raster)
+data1 <- raster("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/70042108.tif")
+auck_el1 <- as(data1, "SpatialGridDataFrame")
+```
 
-- - - example data not found ...
+```{r}
+class(auck_el1) # check the object class
+slot(auck_el1, "grid") # grid slot contains GridTopology object
+slot(auck_el1, "bbox") # check the coordinates
+object.size(auck_el1) # check the total object-size
+object.size(slot(auck_el1, "data")) # check size of data
+```
+
+***
+
+Another possibility for representation is by:  
+
+- the coordinates of the cell centre  
+- the sequence number of the cell  
+
+--> cells can be stored like points (in external databases)  
+
+--> class: **SpatialPixels** , with same slots as **SpatialGrid**
+
+***
+
+Example: create a **SpatialPixelsDataFrame** object from **SpatialPoints** object  
+--> **Spatial** components are copied  
+--> points are checked  
+--> if points on regular grid: **SpatialPixel** object is returned  
+```{r}
+data("meuse.grid") # load example data
+mg_SP <- SpatialPoints(cbind(meuse.grid$x, meuse.grid$y)) # create SpatialPoints object
+summary(mg_SP)
+```
+
+***
+
+```{r}
+mg_SPix0 <- SpatialPixels(mg_SP) # create SpatialPixels object
+summary(mg_SPix0)
+
+mg_SPix1 <- as(mg_SP, "SpatialPixels") # coerse SpatialPoints to SpatialPixels
+summary(mg_SPix1)
+```
+
+
 
 ## 2.8 Raster Objects and the raster package
 ```{r, message =FALSE}
