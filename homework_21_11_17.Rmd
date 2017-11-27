@@ -54,7 +54,7 @@ typeof(x) # storing mode is double
 
 ***
 
-If no method is defined for a class,  it´s passed to a default method.  
+If no method is defined for a class, it´s passed to a default method.  
 
 = generic function. 
 
@@ -155,7 +155,7 @@ getClass("Spatial")
 - a matrix with 2 rows and columns for the coordinates  
 - a CRS class object, defining the coordinate reference system  
 
-Spatial subclasses are also defined by the class *Spatial*.
+Spatial subclasses are also defined by the class *Spatial*.  
   
 ***
 
@@ -205,8 +205,8 @@ CRAN_sp <- SpatialPoints(CRAN_mat, proj4string = llCRS)
 ```{r}
 summary(CRAN_sp)
 ```
---> Object is not projected
---> there are 54 rows of coordinates
+--> Object is not projected  
+--> there are 54 rows of coordinates  
 
 ***
 ### Methods for SpatialPoints
@@ -215,8 +215,8 @@ Access values of the slots: **bbox** method
 ```{r}
 bbox(CRAN_sp) 
 ```
---> bounding box of the object is returned.
---> first row: west-east, second row: south-north direction.
+--> bounding box of the object is returned.  
+--> first row: west-east, second row: south-north direction.  
 
 Reporting to current projection string: **proj4string** method
 ```{r}
@@ -245,9 +245,9 @@ Access the object by indexing:
 summary(CRAN_sp[brazil, ])
 ```
 
---> object ist of class *SpatialPoints*
---> new bounding box
---> projectin is retained
+--> object ist of class *SpatialPoints*  
+--> new bounding box  
+--> projectin is retained  
 
 ***
 ### Data Frames for Spatial Point Data
@@ -317,6 +317,7 @@ all.equal(CRAN_df0, CRAN_spdf2) # check if objects are equal
 ```
 
 ***
+
 **SpatialPoints**: can also represent lines, if information is associated with point, rather than the line.  
 --> sequence numbers for the points need to be entered  
 --> tracing in order is possible
@@ -376,7 +377,7 @@ getClass("SpatialLines")
 ***
 
 Example for a **SpatialLines** object:
-```{r, message = FALSE}
+```{r, message = FALSE, warnings = FALSE}
 library(maps) # load the package (containing the data)
 japan <- map("world", "japan", plot = FALSE) # define the example data
 p4s <- CRS("+proj=longlat +ellps=WGS84") # define the CRS
@@ -489,15 +490,15 @@ Creation of **SpatialPolygons** objects: from shoreline data with closed lines
 
 --> spatial representation of polygons **+** data  
 
---> **SpatialPolygons** objects have tags 
+--> **SpatialPolygons** objects have tags  
 
 --> these tags are matched with row names of the data frame  
-(one-to-one matching)
+(one-to-one matching)  
 
 --> correct data rows are associated with the correct spatial objects  
 
 If tags and row names don?t correspond: **ERROR**  
---> **SpatialPolygonsDataFrame** objects can?t be created.
+--> **SpatialPolygonsDataFrame** objects can?t be created.  
 
 ***  
 
@@ -538,6 +539,7 @@ Have a look on the **SpatialPolygonsDataFrame**:
 ```{r}
 str(state.spdf, max.level = 2)
 ```
+
 ***
 
 ### 2.6.2 Holes and Ring Direction
@@ -551,8 +553,10 @@ str(state.spdf, max.level = 2)
 --> internal boundaries of polygons can be marked  
 (as lakes or holes)
 
-Example: data from Lake Huron (Canada) with Manitoulin Island and lakes on the Island
+Example: data from Lake Huron (Canada) with Manitoulin Island and lakes on the Island  
+
 ***
+
 ```{r, warning=FALSE, echo =FALSE, eval = TRUE}
 # load workspace "high" from harddisk and save high$sp as manitoulin_sp
 load("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/high.RData")
@@ -571,16 +575,18 @@ sapply(slot(slot(manitoulin_sp, "polygons")[[1]], "Polygons"),
 sapply(slot(slot(manitoulin_sp, "polygons")[[1]], "Polygons"),
        function(x) slot(x, "ringDir"))
 ```
+
 ***
+
 Assign the *"hole"* status by adding a comment to each **Polygons** member:
 ```{r}
 library(rgeos)
 manitoulin_sp <- createSPComment(manitoulin_sp)
 sapply(slot(manitoulin_sp, "polygons"), comment)
 ```
---> three times coded 3: three lakes on the Island
---> one time coded 1: mainland shore
---> most coded cero: Lake Huron (normally 2, but not fully contained by the mainland shore)
+--> three times coded 3: three lakes on the Island  
+--> one time coded 1: mainland shore  
+--> most coded cero: Lake Huron (normally 2, but not fully contained by the mainland shore)  
 
 ## 2.7 Spatial Grid and Spatial Pixel Objects (?)
 ```{r}
@@ -590,7 +596,7 @@ getClass("GridTopology")
 --> much less information is required to define their structure  
 --> extent is given by cell resolution and numbers of rows and columns  
 
---> typical for remote sensing and raster
+--> typical for remote sensing and raster  
 
 Have a look on the class **GridTopology**:
 ```{r}
@@ -618,8 +624,8 @@ manitoulin_grd <- GridTopology(cellcentre.offset = cc,
 
 manitoulin_grd # have a look on the grid
 ```
---> grid can be discribed with this object
---> object can be used to construct a **SpatialGrid** object
+--> grid can be discribed with this object  
+--> object can be used to construct a **SpatialGrid** object  
 
 ***
 
@@ -627,7 +633,7 @@ Check the class **SpatialGrid**
 ```{r}
 getClass("SpatialGrid")
 ```
---> contains **GridTopology** and **Spatial** objects.
+--> contains **GridTopology** and **Spatial** objects.  
 
 ***
 
@@ -644,12 +650,15 @@ summary(manitoulin_SG)
 
 
 ***
+
 Example with imported data: **SpatialGridDataFrame  
-```{r, eval = TRUE, echo = FALSE}
+```{r, eval = TRUE, echo = FALSE, results = FALSE}
 library(raster)
 data1 <- raster("C:/Users/Ltischer/Documents/Studium/A Master/Geostatistics/R-Skripte/geostat_homework/70042108.tif")
 auck_el1 <- as(data1, "SpatialGridDataFrame")
 ```
+
+***
 
 ```{r}
 class(auck_el1) # check the object class
@@ -704,6 +713,7 @@ object.size(r)
 cellStats(r, max)
 cellStats(r, min)
 ```
+
 *** 
 
 How to remove values of less then or equal to zero:
@@ -720,7 +730,9 @@ for (i in 1:bs$n) {
 }
 out <- writeStop(out) # close file/stop writing
 ```
+
 ***
+
 Check the new minimum and maximum values:
 ```{r}
 cellStats(out, min)
@@ -728,10 +740,12 @@ cellStats(out, max)
 ```
 
 ***
+
 Possibility for plotting raster data:
 ```{r}
 plot(out, col = terrain.colors(100))
 ```
+
 ***
 
 Coercion between classes of the **sp** and **raster** package is possible.  
@@ -740,6 +754,7 @@ Coercion between classes of the **sp** and **raster** package is possible.
 r1 <- as(out, "SpatialGridDataFrame")
 summary(r1)
 ```
+
 ***
 
 --> Coercion from SpatialGridDataFrame to raster layer:
