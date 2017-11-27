@@ -482,8 +482,6 @@ getClass("SpatialPolygons")
 --> also: additional plot order slot  
 (plot order decreases from polygon with biggest to smallest area)
 
-Creation of **SpatialPolygons** objects: from shoreline data with closed lines
-
 ***
 
 ### 2.6.1 SpatialPolygonsDataFrame Objects
